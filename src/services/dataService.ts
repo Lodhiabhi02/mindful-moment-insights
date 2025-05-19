@@ -1,5 +1,7 @@
 
 import { SentimentResult } from "./sentimentService";
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface SentimentEntry {
   id: string;
@@ -12,7 +14,7 @@ export interface SentimentEntry {
 class DataService {
   private storageKey = "mind_sentiment_entries";
   
-  // Get all entries
+  // Get all entries (now from localStorage as fallback if not logged in)
   getEntries(): SentimentEntry[] {
     const storedEntries = localStorage.getItem(this.storageKey);
     if (!storedEntries) return [];
@@ -33,8 +35,16 @@ class DataService {
   // Add a new entry
   addEntry(entry: SentimentEntry): void {
     const entries = this.getEntries();
-    entries.push(entry);
+    
+    // Create a new entry with a unique ID if not provided
+    const newEntry = {
+      ...entry,
+      id: entry.id || uuidv4()
+    };
+    
+    entries.push(newEntry);
     localStorage.setItem(this.storageKey, JSON.stringify(entries));
+    return;
   }
   
   // Delete an entry
