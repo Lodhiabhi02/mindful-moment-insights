@@ -1,3 +1,4 @@
+
 // Import transformers in a way that won't break if the module isn't available
 let pipeline: any;
 try {
@@ -11,6 +12,8 @@ try {
     return (text: string) => Promise.resolve({ text });
   };
 }
+
+import { GeminiService } from './geminiService';
 
 // Types for sentiment analysis
 export type EmotionScores = {
@@ -56,11 +59,12 @@ const recommendations = {
   ],
 };
 
-// Simulated classifier - in a real app, this would use an actual model
+// Sentiment analysis service - now with Gemini integration
 export class SentimentAnalysisService {
   private classifier: any;
   private isLoading: boolean = false;
   private isModelReady: boolean = false;
+  private useGemini: boolean = true;
 
   constructor() {
     this.initializeModel();
@@ -81,13 +85,76 @@ export class SentimentAnalysisService {
     }
   }
 
-  // For demo purposes, we'll simulate sentiment analysis with a rule-based approach
+  // Updated to use Gemini when available
   async analyzeText(text: string): Promise<SentimentResult> {
     // Ensure the model is ready (or fake model in this case)
     if (!this.isModelReady) {
       await this.initializeModel();
     }
 
+    try {
+      if (this.useGemini) {
+        return await this.analyzeWithGemini(text);
+      } else {
+        // Fall back to the simulated analysis if Gemini is unavailable
+        return await this.simulateAnalysis(text);
+      }
+    } catch (error) {
+      console.error("Error in sentiment analysis:", error);
+      // If Gemini fails, fall back to simulated analysis
+      return this.simulateAnalysis(text);
+    }
+  }
+  
+  // New method to analyze text with Gemini
+  private async analyzeWithGemini(text: string): Promise<SentimentResult> {
+    // Prompt for Gemini to analyze emotions and sentiment
+    const prompt = `
+      Analyze the following text for emotional content and sentiment.
+      Text: "${text}"
+      
+      Respond with a JSON object that has the following structure:
+      {
+        "score": number, // overall sentiment score between -1 (very negative) to 1 (very positive)
+        "level": string, // "mild", "moderate", or "severe" based on the negativity
+        "emotions": {
+          "joy": number, // between 0 and 1
+          "sadness": number, // between 0 and 1
+          "anger": number, // between 0 and 1
+          "fear": number, // between 0 and 1
+          "love": number, // between 0 and 1
+          "surprise": number // between 0 and 1
+        }
+      }
+      
+      The sum of all emotion values should be 1.0. Format the response as valid JSON only.
+    `;
+    
+    try {
+      // Call Gemini API for sentiment analysis
+      const { content } = await GeminiService.generateContent<{
+        score: number;
+        level: SentimentLevel;
+        emotions: EmotionScores;
+      }>(prompt, 'json');
+      
+      // Extract important words separately with another call
+      const importantWords = await GeminiService.getImportantEmotionalWords(text);
+      
+      return {
+        score: content.score,
+        level: content.level as SentimentLevel,
+        emotions: content.emotions,
+        importantWords
+      };
+    } catch (error) {
+      console.error("Error analyzing with Gemini:", error);
+      throw error;
+    }
+  }
+
+  // Original simulation method (kept as fallback)
+  private async simulateAnalysis(text: string): Promise<SentimentResult> {
     // Sleep to simulate model processing time
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -168,7 +235,25 @@ export class SentimentAnalysisService {
     };
   }
 
-  getRecommendations(level: SentimentLevel): string[] {
+  // Update to use Gemini for personalized recommendations when available
+  async getRecommendations(level: SentimentLevel, text?: string): Promise<string[]> {
+    if (this.useGemini && text) {
+      try {
+        // Get personalized recommendations from Gemini
+        const recommendations = await GeminiService.getPersonalizedRecommendations(
+          text,
+          level === "severe" ? -0.8 : level === "moderate" ? -0.4 : 0
+        );
+        
+        if (recommendations.length >= 3) {
+          return recommendations;
+        }
+      } catch (error) {
+        console.error("Error getting recommendations from Gemini:", error);
+      }
+    }
+    
+    // Fall back to default recommendations
     return recommendations[level];
   }
 }

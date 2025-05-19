@@ -42,8 +42,8 @@ const JournalInput: React.FC<JournalInputProps> = ({ onAnalysisComplete }) => {
       // Call the sentiment analysis service
       const result = await sentimentService.analyzeText(text);
       
-      // Get recommendations based on sentiment level
-      const recommendations = sentimentService.getRecommendations(result.level);
+      // Get recommendations based on sentiment level, passing the text for personalization
+      const recommendations = await sentimentService.getRecommendations(result.level, text);
       
       // Create a new entry
       const newEntry: SentimentEntry = {
@@ -65,7 +65,7 @@ const JournalInput: React.FC<JournalInputProps> = ({ onAnalysisComplete }) => {
       // Show success toast
       toast({
         title: "Analysis complete",
-        description: "Your entry has been analyzed successfully.",
+        description: "Your entry has been analyzed with AI and saved.",
       });
       
       // Clear the input
@@ -87,7 +87,7 @@ const JournalInput: React.FC<JournalInputProps> = ({ onAnalysisComplete }) => {
       <CardHeader>
         <CardTitle className="text-xl font-medium text-foreground">How are you feeling today?</CardTitle>
         <CardDescription>
-          Express your thoughts and feelings, and I'll analyze your emotional state.
+          Express your thoughts and feelings, and our AI will analyze your emotional state.
         </CardDescription>
       </CardHeader>
       
@@ -106,7 +106,7 @@ const JournalInput: React.FC<JournalInputProps> = ({ onAnalysisComplete }) => {
           disabled={isAnalyzing || !text.trim()}
           className="bg-mind-primary hover:bg-mind-secondary text-white"
         >
-          {isAnalyzing ? "Analyzing..." : "Analyze Sentiment"}
+          {isAnalyzing ? "Analyzing with Gemini AI..." : "Analyze Sentiment"}
         </Button>
       </CardFooter>
     </Card>

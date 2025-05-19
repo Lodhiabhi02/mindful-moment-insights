@@ -6,7 +6,7 @@ import { SentimentEntry } from '@/services/dataService';
 import { format } from 'date-fns';
 import { SentimentLevel } from '@/services/sentimentService';
 import { Separator } from '@/components/ui/separator';
-import { HeartPulse, Heart, AlertTriangle, AlertOctagon } from 'lucide-react';
+import { HeartPulse, Heart, AlertTriangle, AlertOctagon, Sparkles } from 'lucide-react';
 
 interface SentimentResultProps {
   entry: SentimentEntry;
@@ -87,7 +87,13 @@ const SentimentResult: React.FC<SentimentResultProps> = ({ entry }) => {
       <CardContent className="space-y-6">
         {/* Emotion Breakdown */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-foreground">Emotion Breakdown</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-foreground">Emotion Breakdown</h4>
+            <Badge variant="outline" className="text-xs flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              <span>Gemini AI</span>
+            </Badge>
+          </div>
           <div className="space-y-2">
             {emotionValues.map(({ emotion, percentage }) => (
               <div key={emotion} className="space-y-1">
@@ -124,7 +130,13 @@ const SentimentResult: React.FC<SentimentResultProps> = ({ entry }) => {
         
         {/* Recommendations */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-foreground">Wellness Suggestions</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-foreground">Wellness Suggestions</h4>
+            <Badge variant="outline" className="text-xs flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              <span>AI Generated</span>
+            </Badge>
+          </div>
           <ul className="space-y-2 text-sm">
             {recommendations.map((recommendation, index) => (
               <li key={index} className="flex items-start">
