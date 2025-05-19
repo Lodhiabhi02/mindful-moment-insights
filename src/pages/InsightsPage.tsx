@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Brain } from 'lucide-react';
 import { SentimentEntry } from '@/services/dataService';
+import { SentimentLevel } from '@/services/sentimentService';
 
 const InsightsPage = () => {
   const { user } = useAuth();
@@ -30,24 +31,55 @@ const InsightsPage = () => {
         
       if (error) throw error;
       
-      // Convert to SentimentEntry format
-      const formattedEntries: SentimentEntry[] = data.map(entry => ({
-        id: entry.id,
-        text: entry.text,
-        timestamp: new Date(entry.created_at),
-        analysis: {
-          score: entry.sentiment_score || 0,
-          emotions: entry.emotions || {
+      // Convert to SentimentEntry format with proper analysis structure
+      const formattedEntries: SentimentEntry[] = data.map(entry => {
+        // Calculate sentiment level based on score
+        let level: SentimentLevel = "mild";
+        if (entry.sentiment_score !== null) {
+          const score = entry.sentiment_score;
+          if (score < -0.3) {
+            level = "severe";
+          } else if (score < 0) {
+            level = "moderate";
+          }
+        }
+        
+        // Ensure emotions object has the correct structure
+        const emotions = entry.emotions ? 
+          (typeof entry.emotions === 'object' ? entry.emotions : {
             joy: 0,
             sadness: 0,
             fear: 0,
             anger: 0,
             love: 0,
             surprise: 0
-          }
-        },
-        recommendations: entry.recommendations || []
-      }));
+          }) : {
+            joy: 0,
+            sadness: 0,
+            fear: 0,
+            anger: 0,
+            love: 0,
+            surprise: 0
+          };
+        
+        // Extract important words or use empty array
+        const importantWords = entry.emotions && typeof entry.emotions === 'object' && 'importantWords' in entry.emotions 
+          ? entry.emotions.importantWords || [] 
+          : [];
+        
+        return {
+          id: entry.id,
+          text: entry.text,
+          timestamp: new Date(entry.created_at),
+          analysis: {
+            score: entry.sentiment_score || 0,
+            level,
+            emotions,
+            importantWords: Array.isArray(importantWords) ? importantWords : []
+          },
+          recommendations: entry.recommendations || []
+        };
+      });
       
       setEntries(formattedEntries);
     } catch (error) {
