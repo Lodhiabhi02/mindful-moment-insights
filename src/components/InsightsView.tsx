@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SentimentEntry, dataService } from '@/services/dataService';
@@ -215,10 +214,17 @@ const InsightsView: React.FC<InsightsViewProps> = ({ entries }) => {
                   />
                   <YAxis />
                   <Tooltip 
-                    formatter={(value, name) => [
-                      `${(Number(value) * 100).toFixed(0)}%`, 
-                      name.charAt(0).toUpperCase() + name.slice(1)
-                    ]}
+                    formatter={(value, name) => {
+                      // Handle formatter with proper type checking
+                      const formattedValue = typeof value === 'number' ? 
+                        `${(value * 100).toFixed(0)}%` : value;
+                      
+                      const formattedName = typeof name === 'string' ? 
+                        name.charAt(0).toUpperCase() + name.slice(1) : 
+                        String(name);
+                      
+                      return [formattedValue, formattedName];
+                    }}
                     labelFormatter={(label) => format(new Date(label), 'MMM d, yyyy')}
                   />
                   <Legend />
