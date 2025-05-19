@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Brain } from 'lucide-react';
 import { SentimentEntry } from '@/services/dataService';
-import { SentimentLevel } from '@/services/sentimentService';
+import { SentimentLevel, EmotionScores } from '@/services/sentimentService';
 
 const JournalPage = () => {
   const { user } = useAuth();
@@ -44,28 +44,39 @@ const JournalPage = () => {
           }
         }
         
-        // Ensure emotions object has the correct structure
-        const emotions = entry.emotions ? 
-          (typeof entry.emotions === 'object' ? entry.emotions : {
-            joy: 0,
-            sadness: 0,
-            fear: 0,
-            anger: 0,
-            love: 0,
-            surprise: 0
-          }) : {
-            joy: 0,
-            sadness: 0,
-            fear: 0,
-            anger: 0,
-            love: 0,
-            surprise: 0
-          };
+        // Create a default emotions object that matches EmotionScores type
+        const defaultEmotions: EmotionScores = {
+          joy: 0,
+          sadness: 0,
+          fear: 0,
+          anger: 0,
+          love: 0,
+          surprise: 0
+        };
+        
+        // Merge the database emotions with the default structure if available
+        let emotionsData: EmotionScores = defaultEmotions;
+        
+        if (entry.emotions && typeof entry.emotions === 'object') {
+          // Iterate over the default keys and pick values from entry.emotions if they exist
+          Object.keys(defaultEmotions).forEach(key => {
+            const typedKey = key as keyof EmotionScores;
+            if (entry.emotions && typeof entry.emotions === 'object' && key in entry.emotions) {
+              const value = entry.emotions[key];
+              if (typeof value === 'number') {
+                emotionsData[typedKey] = value;
+              }
+            }
+          });
+        }
         
         // Extract important words or use empty array
-        const importantWords = entry.emotions && typeof entry.emotions === 'object' && 'importantWords' in entry.emotions 
-          ? entry.emotions.importantWords || [] 
-          : [];
+        const importantWords = entry.emotions && 
+          typeof entry.emotions === 'object' && 
+          'importantWords' in entry.emotions &&
+          Array.isArray(entry.emotions.importantWords) 
+            ? entry.emotions.importantWords.map(word => String(word))
+            : [];
         
         return {
           id: entry.id,
@@ -74,8 +85,8 @@ const JournalPage = () => {
           analysis: {
             score: entry.sentiment_score || 0,
             level,
-            emotions,
-            importantWords: Array.isArray(importantWords) ? importantWords : []
+            emotions: emotionsData,
+            importantWords: importantWords
           },
           recommendations: entry.recommendations || []
         };
