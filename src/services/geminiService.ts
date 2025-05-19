@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface GeminiResponse<T = any> {
@@ -59,7 +58,7 @@ export class GeminiService {
         'Take a moment to appreciate something positive in your day.',
         'Try a short 2-minute mindful breathing exercise.',
         'Consider going for a brief walk outside if possible.',
-        'Write down three things you're grateful for right now.',
+        'Write down three things you\'re grateful for right now.',
         'Listen to a favorite uplifting song.'
       ];
     }
